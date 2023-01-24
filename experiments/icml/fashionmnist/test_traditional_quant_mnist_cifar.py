@@ -31,6 +31,7 @@ if __name__ == "__main__":
         "EM",
         "EM-NBVS",
         "EM-BCTS",
+        "EM-TS",
         "EM-VS",
         # "BBSE-hard",
         # "BBSE-soft",
@@ -58,6 +59,8 @@ if __name__ == "__main__":
     nbvs = nbvs(predictions_val, np.eye(10)[y_val], posterior_supplied=True)
     bcts = TempScaling(bias_positions="all")
     bcts = bcts(predictions_val, np.eye(10)[y_val], posterior_supplied=True)
+    ts = TempScaling()
+    ts = bcts(predictions_val, np.eye(10)[y_val], posterior_supplied=True)
     vs = VectorScaling()
     vs = vs(predictions_val, np.eye(10)[y_val], posterior_supplied=True)
     # --------------------------
@@ -97,6 +100,7 @@ if __name__ == "__main__":
             em.predict(X=None, predictions_test=predictions_sample),
             em.predict(X=None, predictions_test=nbvs(predictions_sample)),
             em.predict(X=None, predictions_test=bcts(predictions_sample)),
+            em.predict(X=None, predictions_test=ts(predictions_sample)),
             em.predict(X=None, predictions_test=vs(predictions_sample)),
             # pcc.predict(
             #    X=None,
