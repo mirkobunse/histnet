@@ -9,7 +9,7 @@ from dlquantification.utils.lossfunc import MRAE
 import pandas as pd
 import torch
 import os
-from abstention.calibration import NoBiasVectorScaling, TempScaling, VectorScaling
+from abstention.calibration import TempScaling
 
 # from abstention.label_shift import EMImbalanceAdapter, BBSEImbalanceAdapter
 
@@ -29,12 +29,7 @@ if __name__ == "__main__":
         "PCC",
         "PAC",
         "EM",
-        "EM-NBVS",
-        "EM-BCTS",
-        "EM-TS",
-        "EM-VS",
-        # "BBSE-hard",
-        # "BBSE-soft",
+        "EM-BCTS"
     ]
 
     cc = CC()
@@ -55,14 +50,8 @@ if __name__ == "__main__":
     y_test = np.loadtxt("predictions/true_{}_test.csv".format(dataset), dtype="int")
 
     # CALIBRATION METHODS FOR EM
-    nbvs = NoBiasVectorScaling()
-    nbvs = nbvs(predictions_val, np.eye(10)[y_val], posterior_supplied=True)
     bcts = TempScaling(bias_positions="all")
     bcts = bcts(predictions_val, np.eye(10)[y_val], posterior_supplied=True)
-    ts = TempScaling()
-    ts = bcts(predictions_val, np.eye(10)[y_val], posterior_supplied=True)
-    vs = VectorScaling()
-    vs = vs(predictions_val, np.eye(10)[y_val], posterior_supplied=True)
     # --------------------------
 
     cc.fit(X=None, y=y_val, predictions_train=predictions_val)
@@ -98,14 +87,7 @@ if __name__ == "__main__":
             pcc.predict(X=None, predictions_test=predictions_sample),
             pac.predict(X=None, predictions_test=predictions_sample),
             em.predict(X=None, predictions_test=predictions_sample),
-            em.predict(X=None, predictions_test=nbvs(predictions_sample)),
             em.predict(X=None, predictions_test=bcts(predictions_sample)),
-            em.predict(X=None, predictions_test=ts(predictions_sample)),
-            em.predict(X=None, predictions_test=vs(predictions_sample)),
-            # pcc.predict(
-            #    X=None,
-            #    predictions_test=em(predictions_sample, predictions_val, np.eye(10)[y_val])(predictions_sample),
-            # ),
         ]
 
         for n_method, p_hat in enumerate(p_hats):
