@@ -828,7 +828,7 @@ class DLQuantification:
                     train_class_loss += class_loss.item()
                     batch_class_loss += class_loss.item()
 
-                if abs(quant_loss.item()) >= self.epsilon:  # Juanjo Idea. Taken from SVR.
+                if abs(quant_loss.item()) >= self.epsilon:  # Idea. Taken from SVR.
                     # We compute the gradients from the total loss (could be only quantification loss or
                     # class+quant loss)
                     scaler.scale(total_loss).backward()
