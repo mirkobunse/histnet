@@ -37,7 +37,8 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
         sample_size = 250
         fe_hidden_sizes = [1024, 1024]
         fe_output_size = 300
-        real_bags_proportion = 0.1
+        #real_bags_proportion = 0.1
+        real_bags_proportion = 1
     elif dataset == "T1B":
         path = "lequa/T1B/public"
         common_param_path = "parameters/common_parameters_T1B.json"
@@ -47,7 +48,8 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
         sample_size = 1000
         fe_hidden_sizes = [1024]
         fe_output_size = 512
-        real_bags_proportion = 0.5
+        #real_bags_proportion = 0.5
+        real_bags_proportion=1
 
     print("Loading dataset %s ... " % dataset, end="")
     x_unlabeled_train = np.zeros((n_train_samples * sample_size, n_features)).astype(np.float32)
