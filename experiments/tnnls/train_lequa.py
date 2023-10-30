@@ -25,7 +25,7 @@ def get_n_classes(dataset):
         raise ValueError("Dataset is not correct")
 
 
-def train_lequa(train_name, network, network_parameters, dataset, feature_extraction="rff", cuda_device="cuda:0"):
+def train_lequa(train_name, network, network_parameters, dataset, feature_extraction="rff", skip_sample_mixer=False, cuda_device="cuda:0"):
     n_features = 300
 
     if dataset == "T1A":
@@ -37,8 +37,7 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
         sample_size = 250
         fe_hidden_sizes = [1024, 1024]
         fe_output_size = 300
-        #real_bags_proportion = 0.1
-        real_bags_proportion = 1
+        real_bags_proportion = 0.1
     elif dataset == "T1B":
         path = "lequa/T1B/public"
         common_param_path = "parameters/common_parameters_T1B.json"
@@ -48,9 +47,13 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
         sample_size = 1000
         fe_hidden_sizes = [1024]
         fe_output_size = 512
-        #real_bags_proportion = 0.5
-        real_bags_proportion=1
+        real_bags_proportion = 0.5
 
+
+    if skip_sample_mixer:
+        print("Warning: skipping sample mixer (for ablation study)")
+        real_bags_proportion=1
+        
     print("Loading dataset %s ... " % dataset, end="")
     x_unlabeled_train = np.zeros((n_train_samples * sample_size, n_features)).astype(np.float32)
     x_unlabeled_val = np.zeros((n_val_samples * sample_size, n_features)).astype(np.float32)
@@ -177,6 +180,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--network", help="network to use: histnet, settransformers, deepsets", required=True)
     parser.add_argument("-p", "--network_parameters", help="File with the specific network parameters")
     parser.add_argument("-f", "--feature_extraction", help="nofe, rff, isab")
+    parser.add_argument("-m", "--skip_sample_mixer", help="Add this parameter to skip the sample mixer")
     parser.add_argument("-d", "--dataset", help="Dataset to use: lequaT1A, lequaT1B", required=True)
     parser.add_argument("-c", "--cuda_device", help="Device cuda:0 or cuda:1", required=True)
     print("Using following arguments:")

@@ -1,4 +1,4 @@
-### NEURIPS experiments
+### TNNLS experiments
 
 The experiments comprises two different datasets:
 - Fashion-MNIST (cifar_mnist folder)
@@ -13,7 +13,7 @@ The baselines for Lequa are provided by the official competition repository. Thi
 #### Fashion-MNIST
 Create the directory for the output of the models:
 ```bash
-cd experiments/neurips/fashionmnist
+cd experiments/tnnls/fashionmnist
 mkdir savedmodels predictions results
 ```
 
@@ -31,7 +31,7 @@ python finetune_mnist_cifar.py -c cuda:0 -d fashionmnist
 Download the lequa data and place it in the lequa directory (https://zenodo.org/record/6546188#.Y85gZafMKHs).
 Create the directory for the output of the models:
 ```bash
-cd experiments/neurips
+cd experiments/tnnls
 mkdir savedmodels predictions results
 ```
 
