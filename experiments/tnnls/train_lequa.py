@@ -132,7 +132,7 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
     parameters["tensorboard_dir"] = "runs/" + dataset
     parameters["save_model_path"] = "savedmodels/" + train_name + ".pkl"
     parameters["wandb_experiment_name"] = train_name
-    parameters["use_wandb"] = False
+    parameters["use_wandb"] = True
     print("Network parameteres: ", parameters)
 
     if network == "histnet":
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--network", help="network to use: histnet, settransformers, deepsets", required=True)
     parser.add_argument("-p", "--network_parameters", help="File with the specific network parameters")
     parser.add_argument("-f", "--feature_extraction", help="nofe, rff, isab")
-    parser.add_argument("-m", "--skip_sample_mixer", help="Add this parameter to skip the sample mixer")
+    parser.add_argument("-m", "--skip_sample_mixer",action="store_true", help="Add this parameter to skip the sample mixer")
     parser.add_argument("-d", "--dataset", help="Dataset to use: lequaT1A, lequaT1B", required=True)
     parser.add_argument("-c", "--cuda_device", help="Device cuda:0 or cuda:1", required=True)
     print("Using following arguments:")
