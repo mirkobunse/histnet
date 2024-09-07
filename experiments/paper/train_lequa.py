@@ -19,14 +19,14 @@ from tqdm import tqdm
 def get_n_classes(dataset):
     if dataset == "T1A":
         return 2
-    elif dataset == "T1B":
+    elif dataset == "T1B" or dataset == "T2":
         return 28
     else:
         raise ValueError("Dataset is not correct")
 
 
 def train_lequa(train_name, network, network_parameters, dataset, feature_extraction="rff", skip_sample_mixer=False, cuda_device="cuda:0"):
-    n_features = 300
+    n_features = 256 if dataset=='T2' else 300
 
     if dataset == "T1A":
         path = "lequa/T1A/public"
@@ -41,6 +41,16 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
     elif dataset == "T1B":
         path = "lequa/T1B/public"
         common_param_path = "parameters/common_parameters_T1B.json"
+        n_train_samples = 700
+        n_val_samples = 300
+        n_samples = 1000
+        sample_size = 1000
+        fe_hidden_sizes = [1024]
+        fe_output_size = 512
+        real_bags_proportion = 0.5
+    elif dataset == "T2":
+        path = "lequa/T2/public"
+        common_param_path = "parameters/common_parameters_T2.json"
         n_train_samples = 700
         n_val_samples = 300
         n_samples = 1000
@@ -77,8 +87,18 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
                 j * sample_size : (j + 1) * sample_size,
             ] = sample.to_numpy()
 
-    x_unlabeled_train = torch.from_numpy(x_unlabeled_train).to(cuda_device)
-    x_unlabeled_val = torch.from_numpy(x_unlabeled_val).to(cuda_device)
+    x_unlabeled_train = torch.from_numpy(x_unlabeled_train)
+    x_unlabeled_val = torch.from_numpy(x_unlabeled_val)
+
+    if dataset == "T2":
+        mean = x_unlabeled_train.mean(dim=0)
+        std = x_unlabeled_train.std(dim=0)
+
+        torch.save({'mean': mean, 'std': std}, 'mean_std_T2.pth')
+
+        x_unlabeled_train = (x_unlabeled_train - mean) / std
+        x_unlabeled_val = (x_unlabeled_val - mean) / std
+
     dataset_train = TensorDataset(x_unlabeled_train)
     dataset_val = TensorDataset(x_unlabeled_val)
     print("Done.")
@@ -92,13 +112,13 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
 
     # Bag generators
     train_bag_generator = UnlabeledMixerBagGenerator(
-        cuda_device,
+        'cpu',
         prevalences=train_prevalences,
         sample_size=sample_size,
         real_bags_proportion=real_bags_proportion,
         seed=seed,
     )
-    val_bag_generator = UnlabeledBagGenerator(cuda_device, val_prevalences, sample_size, pick_all=True, seed=seed)
+    val_bag_generator = UnlabeledBagGenerator('cpu', val_prevalences, sample_size, pick_all=True, seed=seed)
 
     # Loss function
     n_classes = get_n_classes(dataset)
@@ -108,17 +128,17 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
 
     if feature_extraction == "rff":
         fe = FCFeatureExtractionModule(
-            input_size=300, output_size=fe_output_size, hidden_sizes=fe_hidden_sizes, dropout=0.5
+            input_size=n_features, output_size=fe_output_size, hidden_sizes=fe_hidden_sizes, dropout=0.5
         )
     elif feature_extraction == "nofe":
-        fe = NoFeatureExtractionModule(input_size=300)
+        fe = NoFeatureExtractionModule(input_size=n_features)
     elif feature_extraction == "ISAB":
-        fe = ISABExtractionModule(input_size=300, dim_hidden=256, num_heads=4, num_inds=128, ln=False)
+        fe = ISABExtractionModule(input_size=n_features, dim_hidden=256, num_heads=4, num_inds=128, ln=False)
     elif feature_extraction == "ISAB_rFF":
         rFF = FCFeatureExtractionModule(
             input_size=256, output_size=fe_output_size, hidden_sizes=fe_hidden_sizes, dropout=0.5
         )
-        fe = ISABExtractionModule(input_size=300, dim_hidden=256, num_heads=4, num_inds=16, ln=False, rFF=rFF)
+        fe = ISABExtractionModule(input_size=n_features, dim_hidden=256, num_heads=4, num_inds=16, ln=False, rFF=rFF)
 
     parameters = {**common_parameters, **network_parameters}
     parameters["n_classes"] = n_classes
@@ -151,6 +171,12 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
 
 def test_lequa(model, train_name, dataset, loss_mrae, cuda_device):
     print("Testing the model...")
+    
+    if dataset == "T2":
+        meanstd = torch.load('mean_std_T2.pth')
+        mean = meanstd['mean']
+        std = meanstd['std']
+    
     n_classes = get_n_classes(dataset)
     samples_to_predict_path = "lequa/" + dataset + "/public/test_samples/"
     prevalences = pd.read_csv(os.path.join("lequa/" + dataset + "/public/test_prevalences.txt"))
@@ -158,8 +184,11 @@ def test_lequa(model, train_name, dataset, loss_mrae, cuda_device):
     results_errors = pd.DataFrame(columns=("AE", "RAE"), index=range(5000), dtype="float")
     for i in tqdm(range(5000)):
         sample = pd.read_csv(os.path.join(samples_to_predict_path, "{}.txt".format(i)))
-        dataset = TensorDataset(torch.from_numpy(sample.to_numpy().astype(np.float32)).to(cuda_device))
-        p_hat = model.predict(dataset)
+        sample = torch.from_numpy(sample.to_numpy().astype(np.float32))
+        if dataset == "T2":
+            sample = (sample - mean) / std
+        sample = TensorDataset(sample)
+        p_hat = model.predict(sample)
         results.iloc[i] = p_hat
         results_errors.iloc[i]["AE"] = torch.nn.functional.l1_loss(
             torch.FloatTensor(p_hat), torch.FloatTensor(prevalences.iloc[i, 1:])

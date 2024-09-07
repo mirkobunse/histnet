@@ -16,3 +16,4 @@ results
 *.pt
 *.zip
 wandb
+*.pth
