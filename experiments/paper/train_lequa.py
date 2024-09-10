@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 
 def get_n_classes(dataset):
-    if dataset == "T1A":
+    if dataset == "T1A" or dataset == "T1":
         return 2
     elif dataset == "T1B" or dataset == "T2":
         return 28
@@ -26,7 +26,7 @@ def get_n_classes(dataset):
 
 
 def train_lequa(train_name, network, network_parameters, dataset, feature_extraction="rff", skip_sample_mixer=False, cuda_device="cuda:0"):
-    n_features = 256 if dataset=='T2' else 300
+    n_features = 256 if (dataset=='T2' or dataset=='T1') else 300
 
     if dataset == "T1A":
         path = "lequa/T1A/public"
@@ -48,6 +48,16 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
         fe_hidden_sizes = [1024]
         fe_output_size = 512
         real_bags_proportion = 0.5
+    if dataset == "T1":
+        path = "lequa/T1/public"
+        common_param_path = "parameters/common_parameters_T1.json"
+        n_train_samples = 700
+        n_val_samples = 300
+        n_samples = 1000
+        sample_size = 250
+        fe_hidden_sizes = [1024, 1024]
+        fe_output_size = 512
+        real_bags_proportion = 0.1
     elif dataset == "T2":
         path = "lequa/T2/public"
         common_param_path = "parameters/common_parameters_T2.json"
@@ -90,11 +100,11 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
     x_unlabeled_train = torch.from_numpy(x_unlabeled_train)
     x_unlabeled_val = torch.from_numpy(x_unlabeled_val)
 
-    if dataset == "T2":
+    if dataset == "T2" or dataset == "T1":
         mean = x_unlabeled_train.mean(dim=0)
         std = x_unlabeled_train.std(dim=0)
 
-        torch.save({'mean': mean, 'std': std}, 'mean_std_T2.pth')
+        torch.save({'mean': mean, 'std': std}, 'mean_std_{}.pth'.format(dataset))
 
         x_unlabeled_train = (x_unlabeled_train - mean) / std
         x_unlabeled_val = (x_unlabeled_val - mean) / std
@@ -172,8 +182,8 @@ def train_lequa(train_name, network, network_parameters, dataset, feature_extrac
 def test_lequa(model, train_name, dataset, loss_mrae, cuda_device):
     print("Testing the model...")
     
-    if dataset == "T2":
-        meanstd = torch.load('mean_std_T2.pth')
+    if dataset == "T2" or dataset == "T1":
+        meanstd = torch.load('mean_std_{}.pth'.format(dataset))
         mean = meanstd['mean']
         std = meanstd['std']
     
@@ -185,7 +195,7 @@ def test_lequa(model, train_name, dataset, loss_mrae, cuda_device):
     for i in tqdm(range(5000)):
         sample = pd.read_csv(os.path.join(samples_to_predict_path, "{}.txt".format(i)))
         sample = torch.from_numpy(sample.to_numpy().astype(np.float32))
-        if dataset == "T2":
+        if dataset == "T2" or dataset == "T1":
             sample = (sample - mean) / std
         sample = TensorDataset(sample)
         p_hat = model.predict(sample)

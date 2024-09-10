@@ -1,4 +1,4 @@
 {
-    "n_bins": 64,
+    "n_bins": 32,
     "histogram": "hard"
 }
