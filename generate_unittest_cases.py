@@ -31,19 +31,19 @@ def main(output_path, module):
 
   elif module == "mab": # generate tests for the SetTransformer's MAB module
     cases = [
-      { "Q": X[y == 0], "K": X[y == 1], "n_features_per_head": 2, "n_heads": 4 },
-      { "Q": X[y == 1], "K": X[y == 0], "n_features_per_head": 3, "n_heads": 3 },
+      { "X1": X[y == 0], "X2": X[y == 1], "n_features_per_head": 2, "n_heads": 4 },
+      { "X1": X[y == 1], "X2": X[y == 0], "n_features_per_head": 3, "n_heads": 3 },
     ]
     for c in cases:
       m = MAB(
-        dim_Q = c["Q"].shape[1],
-        dim_K = c["K"].shape[1],
+        dim_Q = c["X1"].shape[1],
+        dim_K = c["X2"].shape[1],
         dim_V = c["n_features_per_head"] * c["n_heads"],
         num_heads = c["n_heads"],
       )
       c["output"] = m.forward(
-        torch.from_numpy(c["Q"]).unsqueeze(0),
-        torch.from_numpy(c["K"]).unsqueeze(0),
+        torch.from_numpy(c["X1"]).unsqueeze(0),
+        torch.from_numpy(c["X2"]).unsqueeze(0),
       ).squeeze(0).detach().numpy()
 
   elif module == "isab": # generate tests for the SetTransformer's ISAB module
