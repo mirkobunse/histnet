@@ -15,7 +15,8 @@ To generate the unittest cases in a file `histnet_unittest_cases.npy`, call
 
 ```sh
 conda activate histnet
-python generate_unittest_cases.py histnet_unittest_cases.npy
+python generate_unittest_cases.py --module histnet histnet_unittest_cases.npy
+python generate_unittest_cases.py --module mab mab_unittest_cases.npy
 ```
 
 And to load the data elsewhere for unit testing, use
