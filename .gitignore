@@ -18,3 +18,5 @@ results
 wandb
 *.pth
 tables
+
+*.npy
