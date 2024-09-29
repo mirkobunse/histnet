@@ -45,6 +45,17 @@ def main(output_path, module):
         torch.from_numpy(c["X1"]).unsqueeze(0),
         torch.from_numpy(c["X2"]).unsqueeze(0),
       ).squeeze(0).detach().numpy()
+      def get_params(layer): # build a Flax-compatible params tree
+        return {
+          "kernel": layer.weight.t().detach().numpy(),
+          "bias": layer.bias.detach().numpy(),
+        }
+      c["params"] = {
+        "W_Q": get_params(m.fc_q),
+        "W_K": get_params(m.fc_k),
+        "W_V": get_params(m.fc_v),
+        "rFF": get_params(m.fc_o),
+      }
 
   elif module == "isab": # generate tests for the SetTransformer's ISAB module
     cases = []
