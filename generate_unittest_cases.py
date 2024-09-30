@@ -62,9 +62,11 @@ def main(output_path, module):
       c["output"] = \
         m.forward(torch.from_numpy(c["X"]).unsqueeze(0)).squeeze(0).detach().numpy()
       c["params"] = {
-        "X_ind": m.I.detach().numpy(),
-        "MAB_0": get_mab_params(m.mab0),
-        "MAB_1": get_mab_params(m.mab1),
+        "PMA": {
+          "X_ind": m.I.detach().numpy(),
+          "MAB": get_mab_params(m.mab0),
+        },
+        "MAB": get_mab_params(m.mab1),
       }
 
   elif module == "pma": # generate tests for the SetTransformer's PMA module
@@ -90,7 +92,7 @@ def main(output_path, module):
       c["output"] = \
         m.forward(torch.from_numpy(c["X"]).unsqueeze(0)).squeeze(0).detach().numpy()
       c["params"] = {
-        "X_seed": m.S.detach().numpy(),
+        "X_ind": m.S.detach().numpy(),
         "MAB": get_mab_params(m.mab),
       }
 
